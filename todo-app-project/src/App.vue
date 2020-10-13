@@ -79,16 +79,13 @@ export default {
           description: this.description,
           isComplete: false
         };
-        if(this.maxId === 0)  {
-          this.todos.push(todo);
-          this.title = "";
-          this.description = "";
-          return ;
-        } 
-        if(this.maxId < this.todos.reduce((a, b) => Math.max(a.id, b.id))) {
+        this.todos.push(todo);
+        this.title = "";
+        this.description = "";
+        this.maxId++;
+        if(this.maxId < this.todos.map(todo => todo.id).reduce((a, b) => Math.max(a, b))) {
           this.maxId = this.id;
         }
-        this.todos.push(todo);
       }
     },
     click_complete(index) {
@@ -131,14 +128,7 @@ export default {
       return remainingTask;
     },
     id() {
-      if(this.todos.length === 0) {
-        return this.maxId;
-      }
-      console.log(this.todos);
-      return this.todos.reduce((a, b) => Math.max(a.id, b.id)) + 1;
-    },
-    aaa() {
-      return this.todos.length
+      return this.maxId + 1;
     }
   }
 };
