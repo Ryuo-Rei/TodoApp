@@ -1,29 +1,29 @@
 <template>
   <div id="app">
     <h1>todoアプリを作ってみた</h1>
-    <pre style="color: white; font-size: 25px">
+    <pre class="task">
 完了：{{ completeTask }}    残り：{{ remainingTask }}</pre
     >
-    <p style="color: white; font-size: 20px">
+    <p class="level">
       Lv.{{ level }}（次のレベルまで {{ remainingExp }})
     </p>
     <p>
       <input
         type="text"
         v-model="title"
-        style="width: 230px; height: 30px; text-align: center; font-size: 20px"
+        class="title"
         placeholder="タイトル ※必須"
       />
     </p>
     <textarea
       v-model="description"
-      style="width: 230px; height: 80px; font-size: 16px;"
+      class="description"
       placeholder="説明を入力"
     >
     </textarea>
     <p>
       <button
-        style="width: 130px; height:30px; font-size: 20px"
+        class="createButton"
         v-on:click="createTodo"
       >
         todoを作成
@@ -60,50 +60,52 @@ export default {
   data: function() {
     return {
       completeTask: 0,
-      remainingTask: 0,
       level: 1,
       remainingExp: 1,
       title: "",
       description: "",
-      id: 1,
-      todos: [],
-      beforeTodos: []
+      maxId: 0,
+      todos: []
     };
   },
   methods: {
     createTodo() {
       if (this.title === "") {
-        alert("test");
+        alert("タイトルを入力してください。");
       } else {
-        var todo = {
-          id: this.id++,
+        const todo = {
+          id: this.id,
           title: this.title,
           description: this.description,
           isComplete: false
         };
+        if(this.maxId === 0)  {
+          this.todos.push(todo);
+          this.title = "";
+          this.description = "";
+          return ;
+        } 
+        if(this.maxId < this.todos.reduce((a, b) => Math.max(a.id, b.id))) {
+          this.maxId = this.id;
+        }
         this.todos.push(todo);
-        this.remainingTask++;
-        this.title = "";
-        this.description = "";
       }
     },
     click_complete(index) {
-      this.beforeTodos = this.todos[index];
-      this.beforeTodos.isComplete = true;
-      var afterTodos = this.beforeTodos;
-      this.todos.splice(index, 1, afterTodos);
+      const todo = this.todos[index];
+      todo.isComplete = true;
+      this.todos.splice(index, 1, todo);
+      this.completeTask++;
       this.remainingExp--;
       if (this.remainingExp === 0) {
         this.level++;
         this.remainingExp = this.level;
       }
-      this.completeTask++;
-      this.remainingTask--;
     },
     click_undo(index) {
-      this.beforeTodos.isComplete = false;
-      this.todos[index] = this.beforeTodos;
-      this.remainingTask++;
+      const todo = this.todos[index];
+      todo.isComplete = false;
+      this.todos.splice(index, 1, todo);
       this.completeTask--;
       this.remainingExp++;
       if (this.remainingExp > this.level) {
@@ -112,7 +114,31 @@ export default {
       }
     },
     click_delete(index) {
+      if(this.maxId < this.todos[index].id) {
+        this.maxId = this.todos[index].id;
+      }
       this.todos.splice(index, 1);
+    }
+  },
+  computed: {
+    remainingTask() {
+      let remainingTask = 0;
+      for (const todo of this.todos) {
+        if (todo.isComplete === false) {
+          remainingTask++;
+        } 
+      }
+      return remainingTask;
+    },
+    id() {
+      if(this.todos.length === 0) {
+        return this.maxId;
+      }
+      console.log(this.todos);
+      return this.todos.reduce((a, b) => Math.max(a.id, b.id)) + 1;
+    },
+    aaa() {
+      return this.todos.length
     }
   }
 };
@@ -135,6 +161,35 @@ html {
 h1 {
   font-size: 36px;
   color: white;
+}
+
+.task {
+  color: white; 
+  font-size: 25px;
+}
+
+.level {
+  color: white; 
+  font-size: 20px;
+}
+
+.title {
+  width: 230px; 
+  height: 30px; 
+  text-align: center; 
+  font-size: 20px;
+}
+
+.description {
+  width: 230px; 
+  height: 80px; 
+  font-size: 16px;
+}
+
+.createButton {
+  width: 130px; 
+  height:30px; 
+  font-size: 20px;
 }
 
 textbox {
