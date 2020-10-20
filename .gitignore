@@ -21,3 +21,6 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+todo-app-project/src/App2
+todo-app-project/src/components/HelloWorld.vue
+todo-app-project/src/components/HelloWorld.vue
