@@ -7,6 +7,9 @@
     <p class="level">
       Lv.{{ level }}（次のレベルまで {{ remainingExp }})
     </p>
+    <p class="task">
+      {{ todos.isComplete }}
+    </p>
     <p>
       <input
         type="text"
@@ -15,46 +18,59 @@
         placeholder="タイトル ※必須"
       />
     </p>
-    <textarea
-      v-model="description"
-      class="description"
-      placeholder="説明を入力"
-    >
-    </textarea>
     <p>
-      <button
-        class="createButton"
-        v-on:click="createTodo"
+      <textarea
+        v-model="description"
+        class="description"
+        placeholder="説明を入力"
       >
-        todoを作成
-      </button>
+      </textarea>
     </p>
+    <button class="createButton" @click="createTodo">
+      todoを作成
+    </button>
     <div v-for="(todo, index) in todos" :key="index">
-      <p v-if="todo.isComplete">
+      <p class="background" v-show="!todo.isComplete">
+        <span class="text-style1">
+          {{ todo.id }}：{{ todo.title }}
+        </span>
+        <span class="bbb">
+          <a class="underline" @click="complete(index)">完了！</a>
+        </span>
+        <span class="bbb">
+          <a class="underline" @click="click_delete(index)">削除</a>
+        </span>
+        <pre class="text-style1">{{ todo.description }}</pre>
+      </p>
+    </div>
+    <div class ="upper">
+    <table border="2">
+      <tr>
+        <th>id</th>
+        <th>title</th>
+        <th>description</th>
+      </tr>
+      <tr v-for="(todo, index) in completeTasks" :key="index">
+        <td> {{ todo.id }} </td>
+        <td> {{ todo.title }} </td>
+        <td> {{ todo.description }} </td>
+      </tr>
+    </table>
+    </div>
+      
+      <!-- <p v-if="todo.isComplete">
         <span class="text-style2">
           {{ todo.id }}：{{ todo.title }}
         </span>
         <span class="bbb">
           <a class="underline" @click="click_undo(index)">元に戻す</a>
         </span>
-        <span class="bbb">
-          <a class="underline" @click="click_delete(index)">削除</a>
-        </span>
-      </p>
-      <p class="background" v-else>
-        <span class="text-style1">
-          {{ todo.id }}：{{ todo.title }}
-        </span>
-        <span class="aaa">
-          <a class="underline" @click="click_complete(index)">完了！</a>
-        </span>
-        <pre class="text-style1">{{ todo.description }}</pre>
-      </p>
-    </div>
+      </p> -->
   </div>
 </template>
 
 <script>
+import axios from "axios";
 export default {
   name: "App",
   data: function() {
@@ -62,36 +78,33 @@ export default {
       completeTask: 0,
       level: 1,
       remainingExp: 1,
+      todos: [],
       title: "",
-      description: "",
-      maxId: 0,
-      todos: []
+      description: ""
     };
   },
   methods: {
-    createTodo() {
+    async createTodo() {
       if (this.title === "") {
         alert("タイトルを入力してください。");
-      } else {
-        const todo = {
-          id: this.id,
+      }
+      else {
+        const data = {
           title: this.title,
-          description: this.description,
-          isComplete: false
+          description: this.description
         };
-        this.todos.push(todo);
+        await axios.post(`http://localhost:3001/create`, data);
+        const res = await axios.get("http://localhost:3001/");
+        this.todos = res.data.todos;
         this.title = "";
         this.description = "";
-        this.maxId++;
-        if(this.maxId < this.todos.map(todo => todo.id).reduce((a, b) => Math.max(a, b))) {
-          this.maxId = this.id;
-        }
       }
     },
-    click_complete(index) {
-      const todo = this.todos[index];
-      todo.isComplete = true;
-      this.todos.splice(index, 1, todo);
+    async complete(index) {
+      const data = this.todos[index];
+      await axios.post(`http://localhost:3001/update`, data);
+      const res = await axios.get("http://localhost:3001/");
+      this.todos = res.data.todos;
       this.completeTask++;
       this.remainingExp--;
       if (this.remainingExp === 0) {
@@ -99,39 +112,43 @@ export default {
         this.remainingExp = this.level;
       }
     },
-    click_undo(index) {
-      const todo = this.todos[index];
-      todo.isComplete = false;
-      this.todos.splice(index, 1, todo);
-      this.completeTask--;
+    async click_undo(index) {
+      const data = this.todos[index];
+      await axios.post(`http://localhost:3001/undo`, data);
+      const res = await axios.get("http://localhost:3001/");
+      this.todos = res.data.todos;
+      //this.completeTask--;
       this.remainingExp++;
       if (this.remainingExp > this.level) {
-        this.remainingExp = 1;
         this.level--;
+        this.remainingExp = 1;
       }
     },
-    click_delete(index) {
-      if(this.maxId < this.todos[index].id) {
-        this.maxId = this.todos[index].id;
-      }
-      this.todos.splice(index, 1);
+    async click_delete(index) {
+      const data = this.todos[index];
+      await axios.post(`http://localhost:3001/delete`, data);
+      const res = await axios.get("http://localhost:3001/");
+      this.todos = res.data.todos;
     }
   },
   computed: {
     remainingTask() {
-      let remainingTask = 0;
-      for (const todo of this.todos) {
-        if (todo.isComplete === false) {
-          remainingTask++;
-        } 
-      }
-      return remainingTask;
+      return this.todos.filter(todo => todo.isComplete === false).length
     },
-    id() {
-      return this.maxId + 1;
+    completeTasks() {
+      return this.todos.filter(todo => todo.isComplete === true)
     }
+  },
+  mounted() {
+    axios
+      .get("http://localhost:3001/")
+      .then(response => (this.todos = response.data.todos));
+
+    // if(localStorage.completeTask) {
+      // this.completeTask = localStorage.completeTask
+    //}
   }
-};
+}
 </script>
 
 <style>
@@ -154,31 +171,31 @@ h1 {
 }
 
 .task {
-  color: white; 
+  color: white;
   font-size: 25px;
 }
 
 .level {
-  color: white; 
+  color: white;
   font-size: 20px;
 }
 
 .title {
-  width: 230px; 
-  height: 30px; 
-  text-align: center; 
+  width: 230px;
+  height: 30px;
+  text-align: center;
   font-size: 20px;
 }
 
 .description {
-  width: 230px; 
-  height: 80px; 
+  width: 230px;
+  height: 80px;
   font-size: 16px;
 }
 
 .createButton {
-  width: 130px; 
-  height:30px; 
+  width: 130px;
+  height: 30px;
   font-size: 20px;
 }
 
@@ -193,21 +210,21 @@ textbox {
 
 .text-style2 {
   color: white;
-  font-size:20px;
+  font-size: 20px;
 }
 
 .background {
   margin-left: auto;
   margin-right: auto;
   background-color: white;
-  width:500px;
+  width: 500px;
   height: 70px;
 }
 
 .underline {
   text-decoration: underline;
-  font-size:20px;
-}
+  font-size: 20px;
+} 
 
 .aaa {
   margin-left: 40px;
@@ -215,5 +232,16 @@ textbox {
 
 .bbb {
   margin-left: 20px;
+}
+
+.upper {
+  position:fixed;
+  right:50px;
+  top:50px;
+  transition:1s;
+  opacity:0.7;
+}
+table {
+  width: 300px;
 }
 </style>
