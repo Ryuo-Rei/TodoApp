@@ -24,3 +24,6 @@ pnpm-debug.log*
 todo-app-project/src/App2
 todo-app-project/src/components/HelloWorld.vue
 todo-app-project/src/components/HelloWorld.vue
+*.ejs
+nodejs/list-app/public/css/style.css
+todo-app-project/src/components/HelloWorld.vue

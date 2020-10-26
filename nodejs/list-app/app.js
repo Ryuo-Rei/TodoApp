@@ -22,7 +22,7 @@ const database = new Sequelize(name, user, password, {
   dialect: dialect,
 })
 
-app.get('/', async(req, res) => {
+app.get('/select', async(req, res) => {
   const sql = `
           SELECT 
             *
@@ -40,8 +40,8 @@ app.post('/create', async(req, res) => {
   console.log (req.body)
 
   const sql = `INSERT INTO public.todos(
-    title, description, "isComplete")
-    VALUES ($title, $description, false) `
+    title, description, "isComplete", "updateDay", "isEditMode")
+    VALUES ($title, $description, false, now(), false) `
 
   const params = {
     title: req.body.title,
@@ -75,7 +75,8 @@ app.post('/update', async(req, res) => {
   const sql = `UPDATE 
                   todos 
               SET 
-                  "isComplete" = true
+                  "isComplete" = true,
+                  "updateDay" = now()
               WHERE
                   id = $id
               `
@@ -100,6 +101,30 @@ app.post('/undo', async(req, res) => {
               
   const params = {
     id: req.body.id
+  }
+
+  app.post()
+  
+  const result = await database.query(sql, {bind: params, type: Sequelize.QueryTypes.UPDATE})
+  res.status(200).send();
+});
+
+app.post('/edit', async(req, res) => {
+
+  const sql = `UPDATE 
+                  todos 
+              SET 
+                  title = $title,
+                  description = $description,
+                  "updateDay" = now()
+              WHERE
+                  id = $id
+              `
+
+  const params = {
+    id: req.body.id,
+    title: req.body.title,
+    description: req.body.description
   }
   
   const result = await database.query(sql, {bind: params, type: Sequelize.QueryTypes.UPDATE})

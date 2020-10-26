@@ -96,6 +96,7 @@ export default {
         await axios.post(`http://localhost:3001/create`, data);
         const res = await axios.get("http://localhost:3001/");
         this.todos = res.data.todos;
+        // メソッドか
         this.title = "";
         this.description = "";
       }
@@ -117,7 +118,6 @@ export default {
       await axios.post(`http://localhost:3001/undo`, data);
       const res = await axios.get("http://localhost:3001/");
       this.todos = res.data.todos;
-      //this.completeTask--;
       this.remainingExp++;
       if (this.remainingExp > this.level) {
         this.level--;
@@ -140,6 +140,7 @@ export default {
     }
   },
   mounted() {
+    // URL 最後にとってくるような名前を付ける
     axios
       .get("http://localhost:3001/")
       .then(response => (this.todos = response.data.todos));
